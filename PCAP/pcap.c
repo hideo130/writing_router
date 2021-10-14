@@ -95,25 +95,29 @@ int InitRawSocket(char *device, int promiscFlag, int ipOnly)
     return soc;
 }
 
-int AnalyzeArp(u_char *data, int size)
+int main(int argc, char *argv[], char *envp[])
 {
-    u_char *ptr;
-    int lest;
-    struct ether_arp *arp;
-
-    ptr = data;
-    lest = size;
-
-    if (lest < sizeof(struct ether_arp))
+    int soc, size;
+    u_char buf[65535];
+    if (argc <= 1)
     {
-        fprintf(stderr, "lest(%d) < sizeof(struct eher_arp)¥n", lest);
+        fprintf(stderr, "pcap device-name¥n");
+        return 1;
+    }
+
+    if ((soc = InitRawSocket(argv[1], 0, 0)) == -1)
+    {
+        fprintf(stderr, "InitRawSocket:error:%s¥n", argv[1]);
         return -1;
     }
-    arp = (struct ether_arp *)ptr;
-    ptr+=sizeof(struct ether_arp);
-    lest -= sizeof(struct ether_arp);
-
-    PrintArp(arp, stdout);
-
+    while (1)
+    {
+        if ((size = read(soc, buf, sizeof(buf))) <= 0){
+            perror("read");
+        }else{
+            AnalyzePacket(buf, size);
+        }
+    }
+    close(soc);
     return 0;
 }
