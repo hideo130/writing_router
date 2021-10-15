@@ -5,3 +5,4 @@ int PrintArp(struct ether_arp *arp, FILE *fp);
 int PrintEtherHeader(struct ether_header *eh, FILE *fp);
 int PrintIpHeader(struct iphdr *iphdr, u_char *option, int optionLen, FILE *fp);
 int PrintIcmp(struct icmp *icmp, FILE *fp);
+int PrintTcp(struct tcphdr *tcphdr, FILE *fp);

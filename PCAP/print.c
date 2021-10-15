@@ -12,7 +12,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
-#include<netinet/icmp6.h>
+#include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
@@ -41,7 +41,6 @@ char *ip_ip2str(uint32_t ip, char *buf, socklen_t size)
 
     return buf;
 }
-
 
 int PrintArp(struct ether_arp *arp, FILE *fp)
 {
@@ -265,10 +264,34 @@ int PrintIcmp(struct icmp *icmp, FILE *fp)
     fprintf(fp, "icmp_code=%u,", icmp->icmp_code);
     fprintf(fp, "icmp_cksum=%u\n", ntohs(icmp->icmp_cksum));
 
+    // display only echo reply and echo request.
     if (icmp->icmp_type || icmp->icmp_type == 8)
     {
         fprintf(fp, "icmp_id=%u,", ntohs(icmp->icmp_id));
         fprintf(fp, "icmp_seq=%u\n", ntohs(icmp->icmp_seq));
     }
+    return 0;
+}
+
+int PrintTcp(struct tcphdr *tcphdr, FILE *fp)
+{
+
+    fprintf(fp, "tcp-------------------------------------\n");
+
+    fprintf(fp, "source=%u,", ntohs(tcphdr->source));
+    fprintf(fp, "dest=%u\n", ntohs(tcphdr->dest));
+    fprintf(fp, "seq=%u\n", ntohl(tcphdr->seq));
+    fprintf(fp, "ack_seq=%u\n", ntohl(tcphdr->ack_seq));
+    fprintf(fp, "doff=%u,", tcphdr->doff);
+    fprintf(fp, "urg=%u,", tcphdr->urg);
+    fprintf(fp, "ack=%u,", tcphdr->ack);
+    fprintf(fp, "psh=%u,", tcphdr->psh);
+    fprintf(fp, "rst=%u,", tcphdr->rst);
+    fprintf(fp, "syn=%u,", tcphdr->syn);
+    fprintf(fp, "fin=%u,", tcphdr->fin);
+    fprintf(fp, "th_win=%u\n", ntohs(tcphdr->window));
+    fprintf(fp, "th_sum=%u,", ntohs(tcphdr->check));
+    fprintf(fp, "th_urp=%u\n", ntohs(tcphdr->urg_ptr));
+
     return 0;
 }
