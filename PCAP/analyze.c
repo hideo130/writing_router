@@ -11,6 +11,7 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -20,26 +21,129 @@
 int AnalyzeArp(u_char *data, int size)
 {
     u_char *ptr;
-    int lest;
+    int rest;
     struct ether_arp *arp;
 
     ptr = data;
-    lest = size;
+    rest = size;
     // check whether we get data enough size of structure.
-    if (lest < sizeof(struct ether_arp))
+    if (rest < sizeof(struct ether_arp))
     {
-        fprintf(stderr, "lest(%d) < sizeof(struct eher_arp)¥n", lest);
+        fprintf(stderr, "rest(%d) < sizeof(struct eher_arp)\n", rest);
         return -1;
     }
     arp = (struct ether_arp *)ptr;
     ptr += sizeof(struct ether_arp);
-    lest -= sizeof(struct ether_arp);
+    rest -= sizeof(struct ether_arp);
 
     PrintArp(arp, stdout);
 
     return 0;
 }
 
-int AnalyzePacket(u_char *date, int size){
+int AnalyzeIcmp(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct icmp *icmp;
+
+    ptr = data;
+    rest = size;
+    if (rest < sizeof(struct icmp))
+    {
+        fprintf(stderr, "rest(%d)<sizeof(struct icmp)\n", rest);
+        return -1;
+    }
+    icmp = (struct icmp *)ptr;
+    ptr += sizeof(struct icmp);
+    rest -= sizeof(struct icmp);
+    PrintIcmp(icmp, stdout);
+
+    return 0;
+}
+
+int AnalyzeIp(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct iphdr *iphdr;
+    u_char *option;
+    int optionLen, len;
+    unsigned short sum;
+
+    ptr = data;
+    rest = size;
+
+    if (rest < sizeof(struct iphdr))
+    {
+        fprintf(stderr, "rest(%d) <sizeof(struct iphdr)\n", rest);
+        return -1;
+    }
+
+    iphdr = (struct iphdr *)ptr;
+    ptr += sizeof(struct iphdr);
+    rest -= sizeof(struct iphdr);
+
+    // unsigned int ihl:4;
+    // Number after colon indicates bit size.So ihl is 4bit instead of 32 bit.
+    // unsigned int is 4byte so 32bit.
+    // Should I multiply 8 instead of 4. If uint is 2byte(16 bit), then I multiply 4.
+    optionLen = iphdr->ihl*4 - sizeof(struct iphdr);
+    if(optionLen > 0){
+        if(optionLen >=1500){
+            fprintf(stderr, "IP optionLen(%d):too bit\n", optionLen);
+            return -1;
+        }
+        option = ptr;
+        ptr+=optionLen;
+        rest -= optionLen;
+    }
+    // Implement checkIPchecksum　p75
+    
+    PrintIpHeader(iphdr, option, optionLen, stdout);
+
+    if(iphdr->protocol == IPPROTO_ICMP){
+        len = ntohs(iphdr->tot_len) - iphdr->ihl*4;
+        sum = checksum(ptr, len);
+        if(sum!= 0 &&sum!= 0xFFFF){
+            fprintf(stderr, "bad icmp checksum\n");
+            return -1;
+        }
+        AnalyzeIcmp(ptr, rest);
+    }
+
+}
+
+int AnalyzePacket(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct ether_header *eh;
+
+    ptr = data;
+    rest = size;
+
+    if (rest < sizeof(struct ether_header))
+    {
+        fprintf(stderr, "rest(%d) < sizeof(struct ether_header)\n", rest);
+        return -1;
+    }
+
+    eh = (struct ether_header *)ptr;
+    ptr += sizeof(struct ether_header);
+    rest -= sizeof(struct ether_header);
+
+    if (ntohs(eh->ether_type) == ETHERTYPE_ARP)
+    {
+        fprintf(stdout, "Packet[%dbytes]\n", size);
+        PrintEtherHeader(eh, stdout);
+        AnalyzeArp(ptr, rest);
+    }
+    else if (ntohs(eh->ether_type) == ETHERTYPE_IP)
+    {
+        fprintf(stderr, "Packet[%dbytes]\n", size);
+        PrintEtherHeader(eh, stdout);
+        AnalyzeIp(ptr, rest);
+    }
     return 0;
 }

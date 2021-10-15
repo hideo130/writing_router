@@ -133,7 +133,7 @@ int main(int argc, char *argv[], char *envp[])
 
     if ((soc = InitRawSocket(argv[1], 0, 0)) == -1)
     {
-        fprintf(stderr, "InitRawSocket:error:%s¥n", argv[1]);
+        fprintf(stderr, "InitRawSocket:error:%s\n", argv[1]);
         return -1;
     }
 
@@ -151,7 +151,7 @@ int main(int argc, char *argv[], char *envp[])
             }
             else
             {
-                fprintf(stderr, "read size(%d) < %d¥n", size, sizeof(struct ether_header));
+                fprintf(stderr, "read size(%d) < %d\n", size, sizeof(struct ether_header));
             }
         }
     }

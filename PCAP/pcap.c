@@ -101,13 +101,13 @@ int main(int argc, char *argv[], char *envp[])
     u_char buf[65535];
     if (argc <= 1)
     {
-        fprintf(stderr, "pcap device-name¥n");
+        fprintf(stderr, "pcap device-name\n");
         return 1;
     }
 
     if ((soc = InitRawSocket(argv[1], 0, 0)) == -1)
     {
-        fprintf(stderr, "InitRawSocket:error:%s¥n", argv[1]);
+        fprintf(stderr, "InitRawSocket:error:%s\n", argv[1]);
         return -1;
     }
     while (1)
