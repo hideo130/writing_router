@@ -273,6 +273,52 @@ int PrintIcmp(struct icmp *icmp, FILE *fp)
     return 0;
 }
 
+int PrintIcmp6(struct icmp6_hdr *icmp6, FILE *fp)
+{
+
+    fprintf(fp, "icmp6-----------------------------------\n");
+
+    fprintf(fp, "icmp6_type=%u", icmp6->icmp6_type);
+    if (icmp6->icmp6_type == 1)
+    {
+        fprintf(fp, "(Destination Unreachable),");
+    }
+    else if (icmp6->icmp6_type == 2)
+    {
+        fprintf(fp, "(Packet too Big),");
+    }
+    else if (icmp6->icmp6_type == 3)
+    {
+        fprintf(fp, "(Time Exceeded),");
+    }
+    else if (icmp6->icmp6_type == 4)
+    {
+        fprintf(fp, "(Parameter Problem),");
+    }
+    else if (icmp6->icmp6_type == 128)
+    {
+        fprintf(fp, "(Echo Request),");
+    }
+    else if (icmp6->icmp6_type == 129)
+    {
+        fprintf(fp, "(Echo Reply),");
+    }
+    else
+    {
+        fprintf(fp, "(undefined),");
+    }
+    fprintf(fp, "icmp6_code=%u,", icmp6->icmp6_code);
+    fprintf(fp, "icmp6_cksum=%u\n", ntohs(icmp6->icmp6_cksum));
+
+    if (icmp6->icmp6_type == 128 || icmp6->icmp6_type == 129)
+    {
+        fprintf(fp, "icmp6_id=%u,", ntohs(icmp6->icmp6_id));
+        fprintf(fp, "icmp6_seq=%u\n", ntohs(icmp6->icmp6_seq));
+    }
+
+    return 0;
+}
+
 int PrintTcp(struct tcphdr *tcphdr, FILE *fp)
 {
 
@@ -292,6 +338,43 @@ int PrintTcp(struct tcphdr *tcphdr, FILE *fp)
     fprintf(fp, "th_win=%u\n", ntohs(tcphdr->window));
     fprintf(fp, "th_sum=%u,", ntohs(tcphdr->check));
     fprintf(fp, "th_urp=%u\n", ntohs(tcphdr->urg_ptr));
+
+    return 0;
+}
+
+int PrintUdp(struct udphdr *udphdr, FILE *fp)
+{
+    fprintf(fp, "udp-------------------------------------\n");
+
+    fprintf(fp, "source=%u,", ntohs(udphdr->source));
+    fprintf(fp, "dest=%u\n", ntohs(udphdr->dest));
+    fprintf(fp, "len=%u,", ntohs(udphdr->len));
+    fprintf(fp, "check=%x\n", ntohs(udphdr->check));
+
+    return 0;
+}
+
+int PrintIp6Header(struct ip6_hdr *ip6, FILE *fp)
+{
+    char buf[80];
+
+    fprintf(fp, "ip6-------------------------------------\n");
+
+    fprintf(fp, "ip6_flow=%x,", ip6->ip6_flow);
+    fprintf(fp, "ip6_plen=%d,", ntohs(ip6->ip6_plen));
+    fprintf(fp, "ip6_nxt=%u", ip6->ip6_nxt);
+    if (ip6->ip6_nxt <= 17)
+    {
+        fprintf(fp, "(%s),", Proto[ip6->ip6_nxt]);
+    }
+    else
+    {
+        fprintf(fp, "(undefined),");
+    }
+    fprintf(fp, "ip6_hlim=%d,", ip6->ip6_hlim);
+
+    fprintf(fp, "ip6_src=%s\n", inet_ntop(AF_INET6, &ip6->ip6_src, buf, sizeof(buf)));
+    fprintf(fp, "ip6_dst=%s\n", inet_ntop(AF_INET6, &ip6->ip6_dst, buf, sizeof(buf)));
 
     return 0;
 }

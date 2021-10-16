@@ -62,6 +62,30 @@ int AnalyzeIcmp(u_char *data, int size)
     return 0;
 }
 
+int AnalyzeIcmp6(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct icmp6_hdr *icmp6;
+
+    ptr = data;
+    rest = size;
+
+    if (rest < sizeof(struct icmp6_hdr))
+    {
+        fprintf(stderr, "rest(%d) < sizeof(struct icmp6_hdr)", rest);
+        return -1;
+    }
+
+    icmp6 = (struct icmp6_hdr *)ptr;
+    ptr += sizeof(struct icmp6_hdr);
+    rest -= sizeof(struct icmp6_hdr);
+
+    PrintIcmp6(icmp6, stdout);
+
+    return 0;
+}
+
 int AnalyzeIp(u_char *data, int size)
 {
     u_char *ptr;
@@ -129,7 +153,74 @@ int AnalyzeIp(u_char *data, int size)
         }
         AnalyzeTcp(ptr, len);
     }
+    else if (iphdr->protocol == IPPROTO_UDP)
+    {
+        struct udphdr *udphdr;
+        udphdr = (struct udphdr *)ptr;
+        len = ntohs(iphdr->tot_len) - iphdr->ihl * 4;
+        if (udphdr->check != 0 && checkIPDATAchecksum(iphdr, ptr, len) == 0)
+        {
+            fprintf(stderr, "bad udp check sum");
+            return -1;
+        }
+        AnalyzeUdp(ptr, rest);
+    }
 
+    return 0;
+}
+
+int AnalyzeIpv6(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct ip6_hdr *ip6;
+    int len;
+
+    ptr = data;
+    rest = size;
+
+    if (rest < sizeof(struct ip6_hdr))
+    {
+        fprintf(stderr, "rest(%d) < sizeof(struct ip6_hdr)¥n", rest);
+        return -1;
+    }
+
+    ip6 = (struct ip6_hdr *)ptr;
+    ptr += sizeof(struct ip6_hdr);
+    rest -= sizeof(struct ip6_hdr);
+
+    PrintIp6Header(ip6, stdout);
+
+    if (ip6->ip6_nxt == IPPROTO_ICMPV6)
+    {
+        len = ntohs(ip6->ip6_plen);
+        if (checkIP6DATAchecksum(ip6, ptr, len) == 0)
+        {
+            fprintf(stderr, "bad icmp6 checksum\n");
+            return -1;
+        }
+        AnalyzeIcmp6(ptr, rest);
+    }
+    else if (ip6->ip6_nxt == IPPROTO_TCP)
+    {
+        len = ntohs(ip6->ip6_plen);
+        if (checkIP6DATAchecksum(ip6, ptr, len) == 0)
+        {
+            fprintf(stderr, "bad tcp6 checksum\n");
+            return -1;
+        }
+        AnalyzeTcp(ptr, rest);
+    }
+    else if (ip6->ip6_nxt == IPPROTO_UDP)
+    {
+        len = ntohs(ip6->ip6_plen);
+        if (checkIP6DATAchecksum(ip6, ptr, len) == 0)
+        {
+            fprintf(stderr, "bad udp checksum\n");
+            return -1;
+        }
+        AnalyzeUdp(ptr, rest);
+    }
     return 0;
 }
 
@@ -152,6 +243,29 @@ int AnalyzeTcp(u_char *data, int size)
     rest -= sizeof(struct tcphdr);
 
     PrintTcp(tcphdr, stdout);
+
+    return 0;
+}
+
+int AnalyzeUdp(u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct udphdr *udphdr;
+
+    ptr = data;
+    rest = size;
+    if (rest < sizeof(struct udphdr))
+    {
+        fprintf(stderr, "rest(%d) < sizeof(struct udphdr)\n", rest);
+        return -1;
+    }
+
+    udphdr = (struct udphdr *)ptr;
+    ptr += sizeof(struct udphdr);
+    rest -= sizeof(struct udphdr);
+
+    PrintUdp(udphdr, stdout);
 
     return 0;
 }
@@ -186,6 +300,12 @@ int AnalyzePacket(u_char *data, int size)
         fprintf(stderr, "Packet[%dbytes]\n", size);
         PrintEtherHeader(eh, stdout);
         AnalyzeIp(ptr, rest);
+    }
+    else if (ntohs(eh->ether_type) == ETHERTYPE_IPV6)
+    {
+        fprintf(stderr, "Packet[%dbytes]\n", size);
+        PrintEtherHeader(eh, stdout);
+        AnalyzeIpv6(ptr, rest);
     }
     return 0;
 }

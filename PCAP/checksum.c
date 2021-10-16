@@ -25,6 +25,16 @@ struct pseudo_ip
     unsigned short ip_len;
 };
 
+struct pseudo_ip6_hdr
+{
+    struct in6_addr src;
+    struct in6_addr dst;
+    unsigned long plen;
+    unsigned short dmy1;
+    unsigned char dmy2;
+    unsigned char nxt;
+};
+
 u_int16_t checksum(u_char *data, int len)
 {
     register u_int32_t sum;
@@ -165,6 +175,28 @@ int checkIPDATAchecksum(struct iphdr *iphdr, unsigned char *data, int len)
     }
     else
     {
+        return 0;
+    }
+}
+
+int checkIP6DATAchecksum(struct ip6_hdr *ip, unsigned char *data, int len)
+{
+    struct pseudo_ip6_hdr p_ip;
+    unsigned short sum;
+
+    memset(&p_ip, 0, sizeof(struct pseudo_ip6_hdr));
+
+    memcpy(&p_ip.src, &ip->ip6_src, sizeof(struct in6_addr));
+    memcpy(&p_ip.dst, &ip->ip6_dst, sizeof(struct in6_addr));
+    // wWy should I copy only ip6_plen ip6_nxt?
+    // Why I don't have to copy ip6_un1_hlim, nomaly set 0 so it' copied by memset?
+    p_ip.plen = ip->ip6_plen;
+    p_ip.nxt = ip->ip6_nxt;
+
+    sum = checksum2((unsigned char *)&p_ip, sizeof(struct pseudo_ip6_hdr), data, len);
+    if(sum==0||sum==0xFFFF){
+        return 1;
+    }else{
         return 0;
     }
 }

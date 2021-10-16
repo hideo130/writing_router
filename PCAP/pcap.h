@@ -5,7 +5,7 @@
 #define PCAP_VERSION_MAJOR 2
 #define PCAP_VERSION_MINOR 4
 #define DLT_EN10MB 1 /*Ethernet(10Mb) */
-
+int InitServerSocket();
 struct pcap_file_header
 {
     uint32_t magic;

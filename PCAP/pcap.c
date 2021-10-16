@@ -106,18 +106,56 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     if ((soc = InitRawSocket(argv[1], 0, 0)) == -1)
+    // if ((soc = InitServerSocket()) == -1)
     {
         fprintf(stderr, "InitRawSocket:error:%s\n", argv[1]);
         return -1;
     }
     while (1)
     {
-        if ((size = read(soc, buf, sizeof(buf))) <= 0){
+        if ((size = read(soc, buf, sizeof(buf))) <= 0)
+        {
             perror("read");
-        }else{
+        }
+        else
+        {
             AnalyzePacket(buf, size);
         }
     }
     close(soc);
     return 0;
+}
+
+int InitServerSocket()
+{
+    int sock;                    // ソケットディスクリプタ
+    struct sockaddr_in ServAddr; //サーバのアドレス
+
+    // チェックしたい対象ポート
+    int ChPort;   //代入の為のクッション変数
+    char *servIP; // サーバのIPアドレス
+
+    servIP = "127.0.0.1"; // IPアドレスを取る
+
+    /* ポート以外のサーバのアドレス構造体を作成　*/
+    memset(&ServAddr, 0, sizeof(ServAddr));       // 0で埋める
+    ServAddr.sin_family = AF_INET;                //アドレスファミリ
+    ServAddr.sin_addr.s_addr = inet_addr(servIP); // IPアドレス
+
+    /* TCPソケットを作成 */
+    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+    {
+        perror("sokcet() failed");
+        return -1;
+    }
+
+    ChPort = 54321;
+    ServAddr.sin_port = htons(ChPort); //ポート番号
+    /*・サーバへの接続を確立する。*/
+    if (connect(sock, (struct sockaddr *)&ServAddr, sizeof(ServAddr)) == 0)
+        printf("%d Port OK\n", ChPort); //戻り値が0ならListen
+    else
+        printf("%d Port NG\n", ChPort);
+
+    return sock;
 }
