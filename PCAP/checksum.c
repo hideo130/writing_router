@@ -29,6 +29,7 @@ struct pseudo_ip6_hdr
 {
     struct in6_addr src;
     struct in6_addr dst;
+    // plen is payload length
     unsigned long plen;
     unsigned short dmy1;
     unsigned char dmy2;

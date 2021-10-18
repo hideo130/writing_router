@@ -168,7 +168,6 @@ int AnalyzeIp(u_char *data, int size)
 
     return 0;
 }
-
 int AnalyzeIpv6(u_char *data, int size)
 {
     u_char *ptr;
