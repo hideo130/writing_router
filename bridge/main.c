@@ -118,9 +118,8 @@ int Bridge()
             }
             break;
         }
-
-        return 0;
     }
+        return 0;
 }
 
 int DisableIpForward()
