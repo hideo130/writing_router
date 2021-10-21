@@ -71,6 +71,23 @@ int SendIcmpTimeExceeded(int deviceNo, struct ether_header *eh, struct iphdr *ip
 
     rih.version = 4;
     // Why is numerator 20 and is denominator 4?
-    rih.ihl = 20 / 4
+    rih.ihl = 20 / 4;
+    rih.tos = 0;
+    // Why do we add 64?
+    rih.tot_len = htons(sizeof(struct icmp) + 64);
+    rih.id =0;
+    rih.frag_off = 0;
+    rih.ttl = 64;
+    rih.protocol = IPPROTO_ICMP;
+    //First we set checksum 0.Finish setting all property, then calculate checksum.
+    rih.check=0;
+    rih.saddr = Device[deviceNo].addr.s_addr;
+    rih.daddr = iphdr->saddr;
+
+    rih.check((u_char*)&rih, sizeof(struct iphdr));
+
+    // control message 
+    icmp.icmp_type = ICMP_TIME_EXCEEDED;
+    icmp.icmp_code = ICMP_TIMXCEED_INTRANS;
 
 }
