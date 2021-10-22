@@ -75,19 +75,40 @@ int SendIcmpTimeExceeded(int deviceNo, struct ether_header *eh, struct iphdr *ip
     rih.tos = 0;
     // Why do we add 64?
     rih.tot_len = htons(sizeof(struct icmp) + 64);
-    rih.id =0;
+    rih.id = 0;
     rih.frag_off = 0;
     rih.ttl = 64;
     rih.protocol = IPPROTO_ICMP;
-    //First we set checksum 0.Finish setting all property, then calculate checksum.
-    rih.check=0;
+    // First we set checksum 0.Finish setting all property, then calculate checksum.
+    rih.check = 0;
     rih.saddr = Device[deviceNo].addr.s_addr;
     rih.daddr = iphdr->saddr;
 
-    rih.check((u_char*)&rih, sizeof(struct iphdr));
+    rih.check((u_char *)&rih, sizeof(struct iphdr));
 
-    // control message 
+    // We want to send icmp time exceeded, so we have to set type and code.
     icmp.icmp_type = ICMP_TIME_EXCEEDED;
     icmp.icmp_code = ICMP_TIMXCEED_INTRANS;
 
+    icmp.icmp_cksum = 0;
+    icmp.icmp_void = 0;
+
+    ipptr = data + sizeof(struct ether_header);
+
+    icmp.icmp_cksum = checksum2((u_char *)&icmp, 8, ipptr, 64);
+
+    ptr = buf;
+    memcpy(ptr, &reh, sizeof(struct ether_header));
+    ptr += sizeof(struct iphdr);
+    memcpy(ptr, &icmp, 8);
+    ptr += 8;
+
+    memcpy(ptr, ipptr, 64);
+    ptr += 64;
+    len = ptr - buf;
+
+    DebugPrintf("write:SendIcmpTimeExceeded:[%d] %dtypes\n", deviceNo, len);
+    write(Device[deviceNo].soc, buf, len);
+
+    return 0;
 }
