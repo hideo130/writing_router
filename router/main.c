@@ -112,3 +112,46 @@ int SendIcmpTimeExceeded(int deviceNo, struct ether_header *eh, struct iphdr *ip
 
     return 0;
 }
+
+int AnalyzePacket(int deviceNo, u_char *data, int size)
+{
+    u_char *ptr;
+    int rest;
+    struct ether_header *eh;
+    char buf[80];
+    int tno;
+    u_char hwaddr[6];
+
+    ptr = data;
+    rest = size;
+
+    if (rest < sizeof(struct ether_header))
+    {
+        DebugPrintf("[%d]:rest(%d) < sizeof(struct ether_header)\n", deviceNo, rest);
+        return -1;
+    }
+
+    eh = (struct ether_header *)ptr;
+    ptr += sizeof(struct ether_header);
+
+    rest -= sizeof(struct ether_header);
+
+    // check if mac address of packet matches router ones.
+    if (memcmp(&eh->ether_dhost, Device[deviceNo].hwaddr, 6) != 0)
+    {
+        DebugPrintf("[%d]:dhost not match %s\n", deviceNo ,my_ether_ntoa_r((u_char *)&eh->ether_dhost, buf, sizeof(buf)));
+        return -1;
+    }
+
+    if(ntohs(eh->ether_type) == ETHERTYPE_ARP){
+        struct ether_arp *arp;
+
+        if(rest < sizeof(struct ether_arp)){
+            DebugPrintf("[%d]:rest(%d) < sizeof(struct ether_arp)\n", deviceNo, rest);
+            return -1;
+        }
+
+        arp = (struct ether_arp *)ptr;
+        
+    }
+}
