@@ -6,7 +6,7 @@ typedef struct
 } DEVICE;
 
 #define FLAG_FREE 0
-#define FLAB_OK 1
+#define FLAG_OK 1
 #define FLAG_NG -1
 
 typedef struct _data_buf_
