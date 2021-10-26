@@ -24,7 +24,7 @@ typedef struct
     char *NextRouter;
 } PARAM;
 
-PARAM Param = {"eth1", "eth2", 0, "192.168.0.254"}
+PARAM Param = {"eth1", "eth2", 0, "192.168.0.254"};
 
 struct in_addr NextRouter;
 DEVICE Device[2];
@@ -60,14 +60,14 @@ int SendIcmpTimeExceeded(int deviceNo, struct ether_header *eh, struct iphdr *ip
     struct ether_header reh;
     struct iphdr rih;
     struct icmp icmp;
-    u_char *pptr;
+    u_char *ipptr;
     u_char *ptr, buf[1500];
     int len;
 
     // Why is size 6?
     // #define ETH_ALEN	6		/* Octets in one ethernet addr	 */
-    memccpy(reh.ether_dhost, eh->ether_shost, 6);
-    memccpy(reh.ether_shost, Device[deviceNo].hwaddr, 6);
+    memcpy(reh.ether_dhost, eh->ether_shost, 6);
+    memcpy(reh.ether_shost, Device[deviceNo].hwaddr, 6);
     reh.ether_type = htons(ETHERTYPE_IP);
 
     rih.version = 4;
@@ -85,7 +85,7 @@ int SendIcmpTimeExceeded(int deviceNo, struct ether_header *eh, struct iphdr *ip
     rih.saddr = Device[deviceNo].addr.s_addr;
     rih.daddr = iphdr->saddr;
 
-    rih.check((u_char *)&rih, sizeof(struct iphdr));
+    rih.check = checksum((u_char *)&rih, sizeof(struct iphdr));
 
     // We want to send icmp time exceeded, so we have to set type and code.
     icmp.icmp_type = ICMP_TIME_EXCEEDED;
@@ -210,7 +210,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
         {
             DebugPrintf("[%d]:iphdr->ttl == 0 error\n", deviceNo);
             SendIcmpTimeExceeded(deviceNo, eh, iphdr, data, size);
-            return -1
+            return -1;
         }
 
         // This router have two NICs.
@@ -230,7 +230,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
             }
 
             ip2mac = Ip2Max(tno, iphdr->daddr, NULL);
-            if (ip2mac->flag == FLAB_NG || ip2mac->sd.dno != 0)
+            if (ip2mac->flag == FLAG_NG || ip2mac->sd.dno != 0)
             {
                 DebugPrintf("[%d]:Ip2Mac:error or sending \n", deviceNo);
                 AppendSendData(ip2mac, 1, iphdr->daddr, data, size);
@@ -238,7 +238,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
             }
             else
             {
-                memcpy(hwaddr, ip2mac0 > hwaddr, 6);
+                memcpy(hwaddr, ip2mac->hwaddr, 6);
             }
         }
         else
@@ -280,9 +280,9 @@ int Router()
     u_char buf[2048];
 
     targets[0].fd = Device[0].soc;
-    targets[0].events = POOLIN | POLLERR;
+    targets[0].events = POLLIN | POLLERR;
     targets[1].fd = Device[1].soc;
-    targets[1].events = PLLIN | POLLERR;
+    targets[1].events = POLLIN | POLLERR;
 
     while (EndFlag == 0)
     {
