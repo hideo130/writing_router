@@ -154,7 +154,7 @@ char *my_ether_ntoa_r(u_char *hwaddr, char *buf, socklen_t size)
     return (buf);
 }
 
-char *my_inet_noa_r(struct in_addr *addr, char *buf, socklen_t size)
+char *my_inet_ntoa_r(struct in_addr *addr, char *buf, socklen_t size)
 {
     inet_ntop(PF_INET, addr, buf, size);
     return buf;

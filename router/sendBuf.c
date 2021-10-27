@@ -71,7 +71,82 @@ int AppendSendData(IP2MAC *ip2mac, int deviceNo, in_addr_t addr, u_char *data, i
     sd->inBucketSize += size;
     pthread_mutex_unlock(&sd->mutex);
 
-    DebugPrintf("AppendSendData:[%d] %s %dbytes(Total=%lu:%lubytes)\n", deviceNo, in_addr_t2str(addr, buf, sizeof(buf)), size, sd->dno, sd->inBucketSize);
+    DebugPrintf("AppendSendData:[%d] %s %dbytes(Total=%lu:%lubytes)\n", deviceNo, in_addr_t2str(addr, buf, sizeof(buf)),
+                size, sd->dno, sd->inBucketSize);
+
+    return 0;
+}
+
+int GetSendData(IP2MAC *ip2mac, int *size, u_char **data)
+{
+    SEND_DATA *sd = &ip2mac->sd;
+    DATA_BUF *d;
+    int status;
+    char buf[80];
+
+    if (sd->top == NULL)
+    {
+        return -1;
+    }
+
+    if ((status = pthread_mutex_lock(&sd->mutex)) != 0)
+    {
+        DebugPrintf("pthread_mutex_lock:%s\n", strerror(status));
+        return -1;
+    }
+    d = sd->top;
+    sd->top = d->next;
+
+    if (sd->top == NULL)
+    {
+        sd->bottom = NULL;
+    }
+    else
+    {
+        sd->top->before = NULL;
+    }
+    sd->dno--;
+    sd->inBucketSize = d->size;
+
+    pthread_mutex_unlock(&sd->mutex);
+
+    *size = d->size;
+    *data = d->data;
+
+    free(d);
+
+    DebugPrintf("GetSendData:[%d] %s %dbytes\n", ip2mac->deviceNo,
+                in_addr_t2str(ip2mac->addr, buf, sizeof(buf)), *size);
+
+    return 0;
+}
+
+int FreeSendData(IP2MAC *ip2mac)
+{
+    SEND_DATA *sd = &ip2mac->sd;
+    DATA_BUF *ptr;
+    int status;
+    char buf[80];
+
+    if (sd->top == NULL)
+    {
+        return 0;
+    }
+    if ((status = pthread_mutex_lock(&sd->mutex)) != 0)
+    {
+        DebugPrintf("pthread_mutex_lock:%s\n", strerror(status));
+        return -1;
+    }
+
+    for (ptr = sd->top; ptr != NULL; ptr = ptr->next)
+    {
+        DebugPrintf("FreeSendData:%s %lu\n", in_addr_t2str(ip2mac->addr, buf, sizeof(buf)), sd->inBucketSize);
+        free(ptr->data);
+    }
+    sd->top = sd->bottom = NULL;
+
+    pthread_mutex_unlock(&sd->mutex);
+    DebugPrintf("FreeSendData:[%d]\n", ip2mac->deviceNo);
 
     return 0;
 }

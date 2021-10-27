@@ -161,13 +161,13 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
         if (arp->arp_op == htons(ARPOP_REQUEST))
         {
             DebugPrintf("[%d]recv:ARP REQUEST:%dbytes\n", deviceNo, size);
-            Ip2Max(deviceNo, *(in_addr_t *)arp->arp_spa, arp->arp_sha);
+            Ip2Mac(deviceNo, *(in_addr_t *)arp->arp_spa, arp->arp_sha);
         }
 
         if (arp->arp_op == htons(ARPOP_RREPLY))
         {
             DebugPrintf("[%d]recv:ARP REPLY:%dbytes\n", deviceNo, size);
-            Ip2Max(deviceNo, *(in_addr_t *)arp->arp_spa, arp->arp_sha);
+            Ip2Mac(deviceNo, *(in_addr_t *)arp->arp_spa, arp->arp_sha);
         }
     }
     else if (ntohs(eh->ether_type) == ETHERTYPE_IP)
@@ -198,7 +198,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
         ptr += optionLen;
         rest -= optionLen;
 
-        if (checkIPchecsum(iphdr, option, optionLen) == 0)
+        if (checkIPchecksum(iphdr, option, optionLen) == 0)
         {
             DebugPrintf("[%d]:bad ip checksum\n", deviceNo);
             fprintf(stderr, "IP checksum error\n");
@@ -229,7 +229,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
                 return 1;
             }
 
-            ip2mac = Ip2Max(tno, iphdr->daddr, NULL);
+            ip2mac = Ip2Mac(tno, iphdr->daddr, NULL);
             if (ip2mac->flag == FLAG_NG || ip2mac->sd.dno != 0)
             {
                 DebugPrintf("[%d]:Ip2Mac:error or sending \n", deviceNo);
@@ -247,7 +247,7 @@ int AnalyzePacket(int deviceNo, u_char *data, int size)
 
             DebugPrintf("[%d]:%s to NextRouter\n", deviceNo, in_addr_t2str(iphdr->daddr, buf, sizeof(buf)));
 
-            ip2mac = Ip2Max(tno, NextRouter.s_addr, NULL);
+            ip2mac = Ip2Mac(tno, NextRouter.s_addr, NULL);
             if (ip2mac->flag == FLAG_NG || ip2mac->sd.dno != 0)
             {
                 DebugPrintf("[%d]:Ip2Mac:error or sending\n", deviceNo);
