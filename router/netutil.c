@@ -101,6 +101,11 @@ int GetDeviceInfo(char *device, u_char hwaddr[6], struct in_addr *uaddr, struct 
     memset(&ifreq, 0, sizeof(struct ifreq));
     strncpy(ifreq.ifr_name, device, sizeof(ifreq.ifr_name) - 1);
 
+    DebugPrintf("%s\n", ifreq.ifr_name);
+    DebugPrintf("%s\n", device);
+    // hwaddr is not assigned
+    DebugPrintf("%s\n", hwaddr);
+
     if (ioctl(soc, SIOCGIFHWADDR, &ifreq) == -1)
     {
         DebugPerror("ioctl");
