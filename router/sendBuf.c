@@ -106,7 +106,7 @@ int GetSendData(IP2MAC *ip2mac, int *size, u_char **data)
         sd->top->before = NULL;
     }
     sd->dno--;
-    sd->inBucketSize = d->size;
+    sd->inBucketSize -= d->size;
 
     pthread_mutex_unlock(&sd->mutex);
 

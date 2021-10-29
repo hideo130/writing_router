@@ -374,7 +374,7 @@ int main(int argc, char *argv[], char *envp[])
         DebugPrintf("GetDeviceInfo:error:%s\n", Param.Device2);
         return -1;
     }
-    if ((Device[0].soc = InitRawSocket(Param.Device2, 0, 0)) == -1)
+    if ((Device[1].soc = InitRawSocket(Param.Device2, 0, 0)) == -1)
     {
         DebugPrintf("InitRawSocket:error%s\n", Param.Device2);
     }

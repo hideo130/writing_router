@@ -120,6 +120,9 @@ int GetDeviceInfo(char *device, u_char hwaddr[6], struct in_addr *uaddr, struct 
 
     if (ioctl(soc, SIOCGIFADDR, &ifreq) == -1)
     {
+        // If "Cannot assign requested address" is occured, 
+        // then we does not assign IP address to device.
+        DebugPrintf("get PA address error\n");
         DebugPerror("ioctl");
         close(soc);
         return -1;
@@ -254,7 +257,7 @@ int SendArpRequestB(int soc, in_addr_t target_ip, unsigned char target_mac[6], i
 
     for (i = 0; i < 6; i++)
     {
-        arp.eh.ether_shost[i] = target_mac[i];
+        arp.eh.ether_shost[i] = my_mac[i];
     }
 
     arp.eh.ether_type = htons(ETHERTYPE_ARP);
